@@ -1,5 +1,8 @@
 "use client";
 
+import { useRef, useState } from "react";
+import { createPosition, copyPosition } from "@/helper"; // keep your helper as-is
+
 const pieceImages: Record<string, string> = {
   bk: "/assets/bk.png",
   bq: "/assets/bq.png",
@@ -15,70 +18,135 @@ const pieceImages: Record<string, string> = {
   wp: "/assets/wp.png",
 };
 
-const Piece = ({
+/**
+ * Mapping helpers:
+ *
+ * displayFromLogical(logicalRank, logicalFile, isFlipped)
+ *    -> returns { dispRank, dispFile } used for rendering (0..7 top->bottom, left->right)
+ *
+ * logicalFromDisplay(dispRank, dispFile, isFlipped)
+ *    -> returns { rank, file } used for state updates (logical coordinates in your position array)
+ *
+ * These are exact inverses of each other.
+ */
+
+const displayFromLogical = (rank: number, file: number, isFlipped: boolean) => {
+  // original createPosition has rank 0 = white back row (logical top)
+  // we want white visually at bottom when not flipped, so:
+  if (!isFlipped) {
+    // not flipped: displayRank = 7 - logicalRank ; displayFile = logicalFile
+    return { dispRank: 7 - rank, dispFile: file };
+  } else {
+    // flipped: displayRank = logicalRank ; displayFile = 7 - logicalFile
+    return { dispRank: rank, dispFile: 7 - file };
+  }
+};
+
+const logicalFromDisplay = (dispRank: number, dispFile: number, isFlipped: boolean) => {
+  if (!isFlipped) {
+    // inverse of not-flipped mapping
+    return { rank: 7 - dispRank, file: dispFile };
+  } else {
+    // inverse of flipped mapping
+    return { rank: dispRank, file: 7 - dispFile };
+  }
+};
+
+const PieceView = ({
   rank,
   file,
   piece,
+  isFlipped,
 }: {
   rank: number;
   file: number;
   piece: string;
+  isFlipped: boolean;
 }) => {
+  const onDragStart = (e: any) => {
+    // store logical coords + piece id as CSV (keeps state logic)
+    e.dataTransfer.effectAllowed = "move";
+    e.dataTransfer.setData("text/plain", `${piece},${rank},${file}`);
+    // hide while dragging a little
+    setTimeout(() => (e.target.style.opacity = "0"), 0);
+  };
+
+  const onDragEnd = (e: any) => {
+    e.target.style.opacity = "1";
+  };
+
+  const { dispRank, dispFile } = displayFromLogical(rank, file, isFlipped);
+
   return (
     <div
       draggable={true}
-      className="
-        absolute 
-        w-[12.5%] 
-        h-[12.5%]
-        bg-center 
-        bg-no-repeat 
-        bg-contain
-      "
+      onDragStart={onDragStart}
+      onDragEnd={onDragEnd}
+      className="absolute w-[12.5%] h-[12.5%] bg-no-repeat bg-center bg-contain"
       style={{
-        transform: `translate(${file * 100}%, ${rank * 100}%)`,
+        // use display coords to place piece exactly over the tile
+        transform: `translate(${dispFile * 100}%, ${dispRank * 100}%)`,
         backgroundImage: `url(${pieceImages[piece]})`,
       }}
     />
   );
 };
 
-const Pieces = () => {
-  const position: string[][] = Array.from({ length: 8 }, () =>
-    Array(8).fill("")
-  );
+const Pieces = ({ isFlipped }: { isFlipped: boolean }) => {
+  const boardRef = useRef<HTMLDivElement | null>(null);
 
-  // Pawns
-  for (let i = 0; i < 8; i++) {
-    position[6][i] = "bp";
-    position[1][i] = "wp";
-  }
+  // use your helper initial state (logical coordinates)
+  const [position, setPosition] = useState(createPosition());
 
-  // White
-  position[0][0] = "wr";
-  position[0][1] = "wn";
-  position[0][2] = "wb";
-  position[0][3] = "wq";
-  position[0][4] = "wk";
-  position[0][5] = "wb";
-  position[0][6] = "wn";
-  position[0][7] = "wr";
+  // get display square under mouse and convert to logical coordinates
+  const getCoords = (e: any) => {
+    const rect = boardRef.current!.getBoundingClientRect();
+    const size = rect.width / 8;
 
-  // Black
-  position[7][0] = "br";
-  position[7][1] = "bn";
-  position[7][2] = "bb";
-  position[7][3] = "bq";
-  position[7][4] = "bk";
-  position[7][5] = "bb";
-  position[7][6] = "bn";
-  position[7][7] = "br";
+    // clamp to 0..7 to avoid out-of-board drops
+    let dispFile = Math.floor((e.clientX - rect.left) / size);
+    let dispRank = Math.floor((e.clientY - rect.top) / size);
+
+    if (dispFile < 0) dispFile = 0;
+    if (dispFile > 7) dispFile = 7;
+    if (dispRank < 0) dispRank = 0;
+    if (dispRank > 7) dispRank = 7;
+
+    // convert displayed square -> logical coords (inverse mapping)
+    const { rank, file } = logicalFromDisplay(dispRank, dispFile, isFlipped);
+    return { rank, file };
+  };
+
+  const onDrop = (e: any) => {
+    e.preventDefault();
+
+    const raw = e.dataTransfer.getData("text/plain");
+    if (!raw) return;
+
+    const [pieceId, oldRankStr, oldFileStr] = raw.split(",");
+    const oldRank = Number(oldRankStr);
+    const oldFile = Number(oldFileStr);
+
+    const { rank: newRank, file: newFile } = getCoords(e);
+
+    // do nothing if same square
+    if (newRank === oldRank && newFile === oldFile) return;
+
+    const next = copyPosition(position);
+    next[oldRank][oldFile] = "";
+    next[newRank][newFile] = pieceId;
+
+    setPosition(next);
+  };
+
+  const onDragOver = (e: any) => e.preventDefault();
 
   return (
-    <div className="absolute inset-0 pointer-events-none">
+    // boardRef must be attached to the board container (the same area where tiles render)
+    <div ref={boardRef} onDrop={onDrop} onDragOver={onDragOver} className="absolute inset-0 pointer-events-auto">
       {position.map((row, r) =>
         row.map((p, f) =>
-          p ? <Piece key={`${r}-${f}`} rank={r} file={f} piece={p} /> : null
+          p ? <PieceView key={`${r}-${f}`} rank={r} file={f} piece={p} isFlipped={isFlipped} /> : null
         )
       )}
     </div>
