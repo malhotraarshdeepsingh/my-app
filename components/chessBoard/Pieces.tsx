@@ -1,7 +1,10 @@
 "use client";
 
 import { useRef, useState } from "react";
-import { createPosition, copyPosition } from "@/helper"; 
+
+import { useBoard } from "@/contexts/BoardContext";
+import { createPosition, copyPosition } from "@/helper";
+import { makeNextPosition } from "@/reducer/actions/move";
 
 const pieceImages: Record<string, string> = {
   bk: "/assets/bk.png",
@@ -26,7 +29,11 @@ const displayFromLogical = (rank: number, file: number, isFlipped: boolean) => {
   }
 };
 
-const logicalFromDisplay = (dispRank: number, dispFile: number, isFlipped: boolean) => {
+const logicalFromDisplay = (
+  dispRank: number,
+  dispFile: number,
+  isFlipped: boolean
+) => {
   if (!isFlipped) {
     return { rank: 7 - dispRank, file: dispFile };
   } else {
@@ -74,7 +81,10 @@ const PieceView = ({
 const Pieces = ({ isFlipped }: { isFlipped: boolean }) => {
   const boardRef = useRef<HTMLDivElement | null>(null);
 
-  const [position, setPosition] = useState(createPosition());
+  const { state, dispatch } = useBoard();
+  const position = state.position[state.position.length - 1];
+
+  // const [position, setPosition] = useState(createPosition());
 
   const getCoords = (e: any) => {
     const rect = boardRef.current!.getBoundingClientRect();
@@ -110,16 +120,29 @@ const Pieces = ({ isFlipped }: { isFlipped: boolean }) => {
     next[oldRank][oldFile] = "";
     next[newRank][newFile] = pieceId;
 
-    setPosition(next);
+    dispatch(makeNextPosition(next));
   };
 
   const onDragOver = (e: any) => e.preventDefault();
 
   return (
-    <div ref={boardRef} onDrop={onDrop} onDragOver={onDragOver} className="absolute inset-0 pointer-events-auto">
+    <div
+      ref={boardRef}
+      onDrop={onDrop}
+      onDragOver={onDragOver}
+      className="absolute inset-0 pointer-events-auto"
+    >
       {position.map((row, r) =>
         row.map((p, f) =>
-          p ? <PieceView key={`${r}-${f}`} rank={r} file={f} piece={p} isFlipped={isFlipped} /> : null
+          p ? (
+            <PieceView
+              key={`${r}-${f}`}
+              rank={r}
+              file={f}
+              piece={p}
+              isFlipped={isFlipped}
+            />
+          ) : null
         )
       )}
     </div>

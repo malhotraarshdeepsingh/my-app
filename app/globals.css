@@ -22,7 +22,7 @@
   :root {
     --background: #0a0a0a;
     --foreground: #ededed;
-    --tile-size : 40px;
+    --tile-size: 40px;
   }
 }
 
@@ -32,7 +32,8 @@ body {
   font-family: Arial, Helvetica, sans-serif;
 }
 
-html,body {
+html,
+body {
   margin: 0;
   padding: 0;
 }
@@ -42,9 +43,8 @@ html,body {
   place-content: center;
   height: 100vh;
   background: var(--bg-color);
-  font-family: 'Sofia Sans', sans-serif;
+  font-family: "Sofia Sans", sans-serif;
   grid-template-columns: auto 220px;
-
 }
 button {
   background: var(--dark-tile);
