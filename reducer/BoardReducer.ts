@@ -3,15 +3,17 @@ import actionTypes from "./actionTypes";
 export const BoardReducer = (state, action) => {
   switch (action.type) {
     case actionTypes.NEW_MOVE: {
-      let { turn, position } = state;
-
-      turn = turn === "white" ? "black" : "white";
-      position = [...position, action.payload];
-
       return {
-        turn,
         ...state,
-        position,
+        position: [...state.position, action.payload],
+        turn: state.turn === "w" ? "b" : "w",
+      };
+    }
+
+    case actionTypes.GENERATE_CANDITATE_MOVES: {
+      return {
+        ...state,
+        canditateMoves: action.payload,
       };
     }
 

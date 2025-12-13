@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import Pieces from "./Pieces";
+import { useBoard } from "@/contexts/BoardContext";
 
 const baseRanks = [8, 7, 6, 5, 4, 3, 2, 1];
 const baseFiles = ["a", "b", "c", "d", "e", "f", "g", "h"];
@@ -12,6 +13,19 @@ export default function Board() {
   // displayed labels
   const ranksLabels = isFlipped ? [...baseRanks].reverse() : baseRanks;
   const filesLabels = isFlipped ? [...baseFiles].reverse() : baseFiles;
+
+  const {state, dispatch} = useBoard();
+  const position = state.position[state.position.length - 1];
+
+  const getClassName = (i, j) => {
+    let c = "tile"
+    c+= (i + j) % 2 === 0 ? " dark-tile" : " light-tile";
+
+    if (state.canditateMoves.find(m => m[0] === i && m[1] === j)) {
+      if (position[i][j]) c+= " attacking";
+      else c+= " highlight";
+    }
+  }
 
   // helper for tile color using display coordinates
   const tileClassByDisplay = (dispRank: number, dispFile: number) =>

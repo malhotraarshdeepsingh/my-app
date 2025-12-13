@@ -1,10 +1,10 @@
 "use client";
 
 import { useRef, useState } from "react";
-
 import { useBoard } from "@/contexts/BoardContext";
-import { createPosition, copyPosition } from "@/helper";
-import { makeNextPosition } from "@/reducer/actions/move";
+import { copyPosition } from "@/helper";
+import { generateCanditateMoves, makeNextPosition } from "@/reducer/actions/move";
+import arbiter from "@/arbiter/arbiter";
 
 const pieceImages: Record<string, string> = {
   bk: "/assets/bk.png",
@@ -21,52 +21,63 @@ const pieceImages: Record<string, string> = {
   wp: "/assets/wp.png",
 };
 
-const displayFromLogical = (rank: number, file: number, isFlipped: boolean) => {
-  if (!isFlipped) {
-    return { dispRank: 7 - rank, dispFile: file };
-  } else {
-    return { dispRank: rank, dispFile: 7 - file };
-  }
-};
+const displayFromLogical = (
+  rank: number,
+  file: number,
+  flipped: boolean
+) => (!flipped
+  ? { dispRank: 7 - rank, dispFile: file }
+  : { dispRank: rank, dispFile: 7 - file });
 
 const logicalFromDisplay = (
   dispRank: number,
   dispFile: number,
-  isFlipped: boolean
-) => {
-  if (!isFlipped) {
-    return { rank: 7 - dispRank, file: dispFile };
-  } else {
-    return { rank: dispRank, file: 7 - dispFile };
-  }
-};
+  flipped: boolean
+) => (!flipped
+  ? { rank: 7 - dispRank, file: dispFile }
+  : { rank: dispRank, file: 7 - dispFile });
 
 const PieceView = ({
   rank,
   file,
   piece,
   isFlipped,
-}: {
-  rank: number;
-  file: number;
-  piece: string;
-  isFlipped: boolean;
-}) => {
+  setLegalMoves,
+}: any) => {
+  const { state, dispatch } = useBoard();
+  const position = state.position[state.position.length - 1];
+  const turn = state.turn;
+
   const onDragStart = (e: any) => {
+    if (turn !== piece[0]) return;
+
+    const moves = arbiter.getRegularMoves({ piece, position: position, rank, file });
+    dispatch(generateCanditateMoves({canditateMoves: moves}));
+    setLegalMoves(moves);
+
     e.dataTransfer.effectAllowed = "move";
-    e.dataTransfer.setData("text/plain", `${piece},${rank},${file}`);
+    e.dataTransfer.setData(
+      "text/plain",
+      `${piece},${rank},${file}`
+    );
+
     setTimeout(() => (e.target.style.opacity = "0"), 0);
   };
 
   const onDragEnd = (e: any) => {
     e.target.style.opacity = "1";
+    setLegalMoves([]);
   };
 
-  const { dispRank, dispFile } = displayFromLogical(rank, file, isFlipped);
+  const { dispRank, dispFile } = displayFromLogical(
+    rank,
+    file,
+    isFlipped
+  );
 
   return (
     <div
-      draggable={true}
+      draggable
       onDragStart={onDragStart}
       onDragEnd={onDragEnd}
       className="absolute w-[12.5%] h-[12.5%] bg-no-repeat bg-center bg-contain"
@@ -79,27 +90,26 @@ const PieceView = ({
 };
 
 const Pieces = ({ isFlipped }: { isFlipped: boolean }) => {
-  const boardRef = useRef<HTMLDivElement | null>(null);
-
+  const boardRef = useRef<HTMLDivElement>(null);
   const { state, dispatch } = useBoard();
   const position = state.position[state.position.length - 1];
 
-  // const [position, setPosition] = useState(createPosition());
+  const [legalMoves, setLegalMoves] = useState<number[][]>([]);
 
   const getCoords = (e: any) => {
     const rect = boardRef.current!.getBoundingClientRect();
     const size = rect.width / 8;
 
-    let dispFile = Math.floor((e.clientX - rect.left) / size);
-    let dispRank = Math.floor((e.clientY - rect.top) / size);
+    const dispFile = Math.min(
+      7,
+      Math.max(0, Math.floor((e.clientX - rect.left) / size))
+    );
+    const dispRank = Math.min(
+      7,
+      Math.max(0, Math.floor((e.clientY - rect.top) / size))
+    );
 
-    if (dispFile < 0) dispFile = 0;
-    if (dispFile > 7) dispFile = 7;
-    if (dispRank < 0) dispRank = 0;
-    if (dispRank > 7) dispRank = 7;
-
-    const { rank, file } = logicalFromDisplay(dispRank, dispFile, isFlipped);
-    return { rank, file };
+    return logicalFromDisplay(dispRank, dispFile, isFlipped);
   };
 
   const onDrop = (e: any) => {
@@ -108,29 +118,31 @@ const Pieces = ({ isFlipped }: { isFlipped: boolean }) => {
     const raw = e.dataTransfer.getData("text/plain");
     if (!raw) return;
 
-    const [pieceId, oldRankStr, oldFileStr] = raw.split(",");
-    const oldRank = Number(oldRankStr);
-    const oldFile = Number(oldFileStr);
+    const [piece, r0, f0] = raw.split(",");
+    const oldRank = +r0;
+    const oldFile = +f0;
 
-    const { rank: newRank, file: newFile } = getCoords(e);
+    const { rank, file } = getCoords(e);
 
-    if (newRank === oldRank && newFile === oldFile) return;
+    const isLegal = legalMoves.some(
+      ([r, f]) => r === rank && f === file
+    );
+    if (!isLegal) return;
 
     const next = copyPosition(position);
     next[oldRank][oldFile] = "";
-    next[newRank][newFile] = pieceId;
+    next[rank][file] = piece;
 
     dispatch(makeNextPosition(next));
+    setLegalMoves([]);
   };
-
-  const onDragOver = (e: any) => e.preventDefault();
 
   return (
     <div
       ref={boardRef}
       onDrop={onDrop}
-      onDragOver={onDragOver}
-      className="absolute inset-0 pointer-events-auto"
+      onDragOver={(e) => e.preventDefault()}
+      className="absolute inset-0"
     >
       {position.map((row, r) =>
         row.map((p, f) =>
@@ -141,6 +153,7 @@ const Pieces = ({ isFlipped }: { isFlipped: boolean }) => {
               file={f}
               piece={p}
               isFlipped={isFlipped}
+              setLegalMoves={setLegalMoves}
             />
           ) : null
         )
