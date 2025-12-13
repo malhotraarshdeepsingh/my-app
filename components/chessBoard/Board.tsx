@@ -3,6 +3,7 @@
 import { useState } from "react";
 import Pieces from "./Pieces";
 import { useBoard } from "@/contexts/BoardContext";
+import { logicalFromDisplay } from "./Pieces";
 
 const baseRanks = [8, 7, 6, 5, 4, 3, 2, 1];
 const baseFiles = ["a", "b", "c", "d", "e", "f", "g", "h"];
@@ -14,26 +15,42 @@ export default function Board() {
   const ranksLabels = isFlipped ? [...baseRanks].reverse() : baseRanks;
   const filesLabels = isFlipped ? [...baseFiles].reverse() : baseFiles;
 
-  const {state, dispatch} = useBoard();
+  const { state, dispatch } = useBoard();
   const position = state.position[state.position.length - 1];
 
   const getClassName = (i, j) => {
-    let c = "tile"
-    c+= (i + j) % 2 === 0 ? " dark-tile" : " light-tile";
+    let c = "tile";
+    c += (i + j) % 2 === 0 ? " dark-tile" : " light-tile";
 
-    if (state.canditateMoves.find(m => m[0] === i && m[1] === j)) {
-      if (position[i][j]) c+= " attacking";
-      else c+= " highlight";
+    if (state.canditateMoves.find((m) => m[0] === i && m[1] === j)) {
+      if (position[i][j]) c += " attacking";
+      else c += " highlight";
     }
-  }
+  };
 
   // helper for tile color using display coordinates
-  const tileClassByDisplay = (dispRank: number, dispFile: number) =>
-    `relative w-[var(--tile-size)] h-[var(--tile-size)] ${
+  const tileClassByDisplay = (dispRank: number, dispFile: number) => {
+    // convert display → logical
+    const { rank, file } = logicalFromDisplay(dispRank, dispFile, isFlipped);
+
+    let c = `relative w-[var(--tile-size)] h-[var(--tile-size)]`;
+
+    c +=
       (dispRank + dispFile) % 2 === 0
-        ? "bg-[var(--dark-tile)]"
-        : "bg-[var(--light-tile)]"
-    }`;
+        ? " bg-[var(--dark-tile)]"
+        : " bg-[var(--light-tile)]";
+
+    const isCandidate = state.canditateMoves?.some(
+      (m) => m[0] === rank && m[1] === file
+    );
+
+    if (isCandidate) {
+      if (position[rank][file]) c += " attacking";
+      else c += " highlight";
+    }
+
+    return c;
+  };
 
   return (
     <div className="w-full flex flex-col items-start gap-3">

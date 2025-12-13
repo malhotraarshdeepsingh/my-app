@@ -3,7 +3,10 @@
 import { useRef, useState } from "react";
 import { useBoard } from "@/contexts/BoardContext";
 import { copyPosition } from "@/helper";
-import { generateCanditateMoves, makeNextPosition } from "@/reducer/actions/move";
+import {
+  generateCanditateMoves,
+  makeNextPosition,
+} from "@/reducer/actions/move";
 import arbiter from "@/arbiter/arbiter";
 
 const pieceImages: Record<string, string> = {
@@ -21,29 +24,21 @@ const pieceImages: Record<string, string> = {
   wp: "/assets/wp.png",
 };
 
-const displayFromLogical = (
-  rank: number,
-  file: number,
-  flipped: boolean
-) => (!flipped
-  ? { dispRank: 7 - rank, dispFile: file }
-  : { dispRank: rank, dispFile: 7 - file });
+const displayFromLogical = (rank: number, file: number, flipped: boolean) =>
+  !flipped
+    ? { dispRank: 7 - rank, dispFile: file }
+    : { dispRank: rank, dispFile: 7 - file };
 
-const logicalFromDisplay = (
+export const logicalFromDisplay = (
   dispRank: number,
   dispFile: number,
   flipped: boolean
-) => (!flipped
-  ? { rank: 7 - dispRank, file: dispFile }
-  : { rank: dispRank, file: 7 - dispFile });
+) =>
+  !flipped
+    ? { rank: 7 - dispRank, file: dispFile }
+    : { rank: dispRank, file: 7 - dispFile };
 
-const PieceView = ({
-  rank,
-  file,
-  piece,
-  isFlipped,
-  setLegalMoves,
-}: any) => {
+const PieceView = ({ rank, file, piece, isFlipped, setLegalMoves }: any) => {
   const { state, dispatch } = useBoard();
   const position = state.position[state.position.length - 1];
   const turn = state.turn;
@@ -51,15 +46,17 @@ const PieceView = ({
   const onDragStart = (e: any) => {
     if (turn !== piece[0]) return;
 
-    const moves = arbiter.getRegularMoves({ piece, position: position, rank, file });
-    dispatch(generateCanditateMoves({canditateMoves: moves}));
+    const moves = arbiter.getRegularMoves({
+      piece,
+      position: position,
+      rank,
+      file,
+    });
+    dispatch(generateCanditateMoves({ canditateMoves: moves }));
     setLegalMoves(moves);
 
     e.dataTransfer.effectAllowed = "move";
-    e.dataTransfer.setData(
-      "text/plain",
-      `${piece},${rank},${file}`
-    );
+    e.dataTransfer.setData("text/plain", `${piece},${rank},${file}`);
 
     setTimeout(() => (e.target.style.opacity = "0"), 0);
   };
@@ -67,13 +64,10 @@ const PieceView = ({
   const onDragEnd = (e: any) => {
     e.target.style.opacity = "1";
     setLegalMoves([]);
+    dispatch(generateCanditateMoves({ canditateMoves: [] }));
   };
 
-  const { dispRank, dispFile } = displayFromLogical(
-    rank,
-    file,
-    isFlipped
-  );
+  const { dispRank, dispFile } = displayFromLogical(rank, file, isFlipped);
 
   return (
     <div
@@ -124,9 +118,7 @@ const Pieces = ({ isFlipped }: { isFlipped: boolean }) => {
 
     const { rank, file } = getCoords(e);
 
-    const isLegal = legalMoves.some(
-      ([r, f]) => r === rank && f === file
-    );
+    const isLegal = legalMoves.some(([r, f]) => r === rank && f === file);
     if (!isLegal) return;
 
     const next = copyPosition(position);
@@ -134,6 +126,7 @@ const Pieces = ({ isFlipped }: { isFlipped: boolean }) => {
     next[rank][file] = piece;
 
     dispatch(makeNextPosition(next));
+    dispatch(generateCanditateMoves({ canditateMoves: [] }));
     setLegalMoves([]);
   };
 
