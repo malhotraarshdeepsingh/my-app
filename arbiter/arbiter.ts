@@ -21,6 +21,8 @@ const arbiter = {
       return getQueenMoves({ piece, position, rank, file });
     if (piece.endsWith("k"))
       return getKingMoves({ piece, position, rank, file });
+    if (piece.endsWith("p"))
+      return getPawnMoves({ piece, position, rank, file });
 
     return [];
   },

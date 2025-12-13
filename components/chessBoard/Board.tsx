@@ -5,8 +5,8 @@ import Pieces from "./Pieces";
 import { useBoard } from "@/contexts/BoardContext";
 import { logicalFromDisplay } from "./Pieces";
 
-const baseRanks = [8, 7, 6, 5, 4, 3, 2, 1];
-const baseFiles = ["a", "b", "c", "d", "e", "f", "g", "h"];
+const baseRanks = [1, 2, 3, 4, 5, 6, 7, 8];
+const baseFiles = ["h", "g", "f", "e", "d", "c", "b", "a"];
 
 export default function Board() {
   const [isFlipped, setIsFlipped] = useState(false);
