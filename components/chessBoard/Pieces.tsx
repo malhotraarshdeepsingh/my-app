@@ -42,6 +42,7 @@ const PieceView = ({ rank, file, piece, isFlipped, setLegalMoves }: any) => {
   const { state, dispatch } = useBoard();
   const position = state.position[state.position.length - 1];
   const prevPosition = state.position[state.position.length - 2];
+  const castling = state.castling;
   const turn = state.turn;
 
   const onDragStart = (e: any) => {
@@ -53,6 +54,7 @@ const PieceView = ({ rank, file, piece, isFlipped, setLegalMoves }: any) => {
       prevPosition: prevPosition,
       rank,
       file,
+      castling: castling,
     });
     dispatch(generateCanditateMoves({ canditateMoves: moves }));
     setLegalMoves(moves);
@@ -169,6 +171,23 @@ const Pieces = ({ isFlipped }: { isFlipped: boolean }) => {
           color: piece[0],
         });
         return;
+      }
+    }
+
+    // ---------- CASTLING EXECUTION ----------
+    if (piece.endsWith("k") && Math.abs(file - oldFile) === 2) {
+      const rank = piece[0] === "w" ? 7 : 0;
+
+      // king side
+      if (file === 5) {
+        next[rank][4] = piece[0] + "r";
+        next[rank][7] = "";
+      }
+
+      // queen side
+      if (file === 1) {
+        next[rank][2] = piece[0] + "r";
+        next[rank][0] = "";
       }
     }
 

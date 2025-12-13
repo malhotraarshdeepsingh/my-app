@@ -147,7 +147,7 @@ export const getQueenMoves = ({ position, rank, file, piece }) => {
   return moves;
 };
 
-export const getKingMoves = ({ position, rank, file, piece }) => {
+export const getKingMoves = ({ position, rank, file, piece, castling }: any) => {
   const moves: number[][] = [];
   const colour = piece[0];
   const enemy = colour === "w" ? "b" : "w";
@@ -173,6 +173,22 @@ export const getKingMoves = ({ position, rank, file, piece }) => {
 
     if (target === "" || target.startsWith(enemy)) {
       moves.push([r, f]);
+    }
+  }
+
+  if (file === 3 && (rank === 0 || rank === 7)) {
+    if (castling[colour].kingSide === true &&
+        position[rank][4] === "" &&
+        position[rank][5] === "" &&
+        position[rank][6] === "" &&
+        position[rank][7] === colour + "r") {
+      moves.push([rank, 5]);
+    }
+    if (castling[colour].queenSide === true &&
+        position[rank][1] === "" &&
+        position[rank][2] === "" &&
+        position[rank][0] === colour + "r") {
+      moves.push([rank, 1]);
     }
   }
 
