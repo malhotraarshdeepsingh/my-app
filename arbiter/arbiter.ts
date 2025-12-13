@@ -8,7 +8,7 @@ import {
 } from "@/arbiter/getMove";
 
 const arbiter = {
-  getRegularMoves({ piece, position, rank, file }) {
+  getRegularMoves({ piece, position, prevPosition, rank, file }) {
     if (!piece) return [];
 
     if (piece.endsWith("r"))
@@ -22,7 +22,7 @@ const arbiter = {
     if (piece.endsWith("k"))
       return getKingMoves({ piece, position, rank, file });
     if (piece.endsWith("p"))
-      return getPawnMoves({ piece, position, rank, file });
+      return getPawnMoves({ piece, position, prevPosition, rank, file });
 
     return [];
   },

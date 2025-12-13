@@ -41,6 +41,7 @@ export const logicalFromDisplay = (
 const PieceView = ({ rank, file, piece, isFlipped, setLegalMoves }: any) => {
   const { state, dispatch } = useBoard();
   const position = state.position[state.position.length - 1];
+  const prevPosition = state.position[state.position.length - 2];
   const turn = state.turn;
 
   const onDragStart = (e: any) => {
@@ -49,6 +50,7 @@ const PieceView = ({ rank, file, piece, isFlipped, setLegalMoves }: any) => {
     const moves = arbiter.getRegularMoves({
       piece,
       position: position,
+      prevPosition: prevPosition,
       rank,
       file,
     });
@@ -124,6 +126,15 @@ const Pieces = ({ isFlipped }: { isFlipped: boolean }) => {
     const next = copyPosition(position);
     next[oldRank][oldFile] = "";
     next[rank][file] = piece;
+
+    // en passant capture removal
+    if (
+      piece.endsWith("p") &&
+      file !== oldFile &&
+      position[rank][file] === ""
+    ) {
+      next[oldRank][file] = ""; // remove pawn that moved two squares
+    }
 
     dispatch(makeNextPosition(next));
     dispatch(generateCanditateMoves({ canditateMoves: [] }));

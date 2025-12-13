@@ -179,19 +179,19 @@ export const getKingMoves = ({ position, rank, file, piece }) => {
   return moves;
 };
 
-export const getPawnMoves = ({ position, rank, file, piece }) => {
+export const getPawnMoves = ({ position, prevPosition, rank, file, piece }) => {
   const moves: number[][] = [];
   const colour = piece[0];
-  const direction = colour === "w" ? -1 : 1;
-  const startRank = colour === "w" ? 6 : 1;
   const enemy = colour === "w" ? "b" : "w";
 
-  // one square forward
+  const direction = colour === "w" ? -1 : 1;
+  const startRank = colour === "w" ? 6 : 1;
+
+  // ---------- FORWARD ----------
   const oneStep = rank + direction;
   if (oneStep >= 0 && oneStep <= 7 && position[oneStep][file] === "") {
     moves.push([oneStep, file]);
 
-    // two squares forward from start
     const twoStep = rank + 2 * direction;
     if (
       rank === startRank &&
@@ -201,7 +201,7 @@ export const getPawnMoves = ({ position, rank, file, piece }) => {
     }
   }
 
-  // captures
+  // ---------- NORMAL CAPTURES ----------
   for (const df of [-1, 1]) {
     const r = rank + direction;
     const f = file + df;
@@ -209,8 +209,33 @@ export const getPawnMoves = ({ position, rank, file, piece }) => {
     if (r < 0 || r > 7 || f < 0 || f > 7) continue;
 
     const target = position[r][f];
-    if (target.startsWith(enemy)) {
+    if (target !== "" && target.startsWith(enemy)) {
       moves.push([r, f]);
+    }
+  }
+
+  // ---------- EN PASSANT ----------
+  if (prevPosition) {
+    const epRank = colour === "w" ? 3 : 4;
+
+    if (rank === epRank) {
+      for (const df of [-1, 1]) {
+        const adjFile = file + df;
+        if (adjFile < 0 || adjFile > 7) continue;
+
+        const enemyPawn = position[rank][adjFile];
+        if (enemyPawn !== enemy + "p") continue;
+
+        const enemyStartRank = colour === "w" ? 1 : 6;
+        const enemyEndRank = rank;
+
+        if (
+          prevPosition[enemyStartRank][adjFile] === enemy + "p" &&
+          prevPosition[enemyEndRank][adjFile] === ""
+        ) {
+          moves.push([rank + direction, adjFile]);
+        }
+      }
     }
   }
 
