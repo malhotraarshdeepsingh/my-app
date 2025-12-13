@@ -1,4 +1,4 @@
-export const getRookMoves = ({position, rank, file, piece}) => {
+export const getRookMoves = ({ position, rank, file, piece }) => {
   const moves: number[][] = [];
   const colour = piece[0];
   const enemy = colour === "w" ? "b" : "w";
@@ -24,5 +24,45 @@ export const getRookMoves = ({position, rank, file, piece}) => {
       if (position[r][f]?.startsWith(enemy)) break;
     }
   }
+  return moves;
+};
+
+export const getKnightMoves = ({ position, rank, file, piece }) => {
+  const moves: number[][] = [];
+  const colour = piece[0];
+  const enemy = colour === "w" ? "b" : "w";
+
+  const offsets = [
+    [-2, -1],
+    [-2,  1],
+    [ 2, -1],
+    [ 2,  1],
+    [-1,  2],
+    [ 1,  2],
+    [ 1, -2],
+    [-1, -2],
+  ];
+
+  for (const [dr, df] of offsets) {
+    const r = rank + dr;
+    const f = file + df;
+
+    // bounds check
+    if (r < 0 || r > 7 || f < 0 || f > 7) continue;
+
+    const target = position[r][f];
+
+    // empty square
+    if (target === "") {
+      moves.push([r, f]);
+      continue;
+    }
+
+    // enemy capture
+    if (target.startsWith(enemy)) {
+      moves.push([r, f]);
+    }
+  }
+
   return moves;
 };
