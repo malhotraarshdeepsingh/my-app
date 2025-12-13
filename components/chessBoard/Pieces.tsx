@@ -91,6 +91,13 @@ const Pieces = ({ isFlipped }: { isFlipped: boolean }) => {
   const position = state.position[state.position.length - 1];
 
   const [legalMoves, setLegalMoves] = useState<number[][]>([]);
+  const [promotion, setPromotion] = useState<null | {
+    rank: number;
+    file: number;
+    color: "w" | "b";
+  }>(null);
+
+  const [pendingPosition, setPendingPosition] = useState<any>(null);
 
   const getCoords = (e: any) => {
     const rect = boardRef.current!.getBoundingClientRect();
@@ -106,6 +113,20 @@ const Pieces = ({ isFlipped }: { isFlipped: boolean }) => {
     );
 
     return logicalFromDisplay(dispRank, dispFile, isFlipped);
+  };
+
+  const promotePawn = (type: "q" | "r" | "b" | "n") => {
+    if (!promotion || !pendingPosition) return;
+
+    const { rank, file, color } = promotion;
+    pendingPosition[rank][file] = color + type;
+
+    dispatch(makeNextPosition(pendingPosition));
+    dispatch(generateCanditateMoves({ canditateMoves: [] }));
+
+    setPromotion(null);
+    setPendingPosition(null);
+    setLegalMoves([]);
   };
 
   const onDrop = (e: any) => {
@@ -136,6 +157,21 @@ const Pieces = ({ isFlipped }: { isFlipped: boolean }) => {
       next[oldRank][file] = ""; // remove pawn that moved two squares
     }
 
+    // ---------- PAWN PROMOTION (WITH CHOICE) ----------
+    if (piece.endsWith("p")) {
+      const promotionRank = piece[0] === "w" ? 0 : 7;
+
+      if (rank === promotionRank) {
+        setPendingPosition(next);
+        setPromotion({
+          rank,
+          file,
+          color: piece[0],
+        });
+        return;
+      }
+    }
+
     dispatch(makeNextPosition(next));
     dispatch(generateCanditateMoves({ canditateMoves: [] }));
     setLegalMoves([]);
@@ -148,6 +184,7 @@ const Pieces = ({ isFlipped }: { isFlipped: boolean }) => {
       onDragOver={(e) => e.preventDefault()}
       className="absolute inset-0"
     >
+      {/* PIECES */}
       {position.map((row, r) =>
         row.map((p, f) =>
           p ? (
@@ -161,6 +198,32 @@ const Pieces = ({ isFlipped }: { isFlipped: boolean }) => {
             />
           ) : null
         )
+      )}
+
+      {/* PROMOTION UI (ADD HERE) */}
+      {promotion && (
+        <div className="absolute inset-0 z-50 flex items-center justify-center bg-black/50">
+          <div className="flex gap-3 bg-white p-4 rounded-xl shadow-lg">
+            {["q", "r", "b", "n"].map((t) => (
+              <button
+                key={t}
+                onClick={() => promotePawn(t as any)}
+                className="
+            w-20 h-20
+            bg-[#f0d9b5]
+            hover:bg-[#b58863]
+            rounded-lg
+            flex items-center justify-center
+            transition
+          "
+              >
+                <span className="text-sm font-semibold uppercase mt-1">
+                  {t}
+                </span>
+              </button>
+            ))}
+          </div>
+        </div>
       )}
     </div>
   );
