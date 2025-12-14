@@ -25,5 +25,13 @@ export const isInsufficientMaterial = (position) => {
     if (bishops.length === 2) return true;
   }
 
+  // K + 2N vs K
+  if (
+    pieces.length === 4 &&
+    pieces.filter(p => p.endsWith("n")).length === 2
+    ) {
+    return true;
+  }
+
   return false;
 };
