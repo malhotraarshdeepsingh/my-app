@@ -5,7 +5,7 @@ export const makeNextPosition = (next) => ({
   payload: next,
 });
 
-export const generateCanditateMoves = ({canditateMoves}) => ({
+export const generateCanditateMoves = ({ canditateMoves }) => ({
   type: actionTypes.GENERATE_CANDITATE_MOVES,
   payload: canditateMoves,
 });

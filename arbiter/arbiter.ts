@@ -8,7 +8,14 @@ import {
 } from "@/arbiter/getMove";
 
 const arbiter = {
-  getRegularMoves({ piece, position, prevPosition, rank, file, castling }: any) {
+  getRegularMoves({
+    piece,
+    position,
+    prevPosition,
+    rank,
+    file,
+    castling,
+  }: any) {
     if (!piece) return [];
 
     if (piece.endsWith("r"))
