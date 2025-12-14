@@ -6,6 +6,7 @@ import { useBoard } from "@/contexts/BoardContext";
 import { logicalFromDisplay } from "./Pieces";
 import { isKingInCheck } from "@/arbiter/attacks";
 import { isCheckmate, isStalemate } from "@/arbiter/checkmate";
+import { isDraw } from "@/arbiter/draw";
 
 const baseRanks = [1, 2, 3, 4, 5, 6, 7, 8];
 const baseFiles = ["h", "g", "f", "e", "d", "c", "b", "a"];
@@ -57,6 +58,13 @@ export default function Board() {
     castling: state.castling,
     colour: state.turn,
   });
+
+  const draw = isDraw({
+    position,
+    history: state.position,
+    turn: state.turn,
+    castling: state.castling,
+  })
 
   const getClassName = (i, j) => {
     let c = "tile";
@@ -150,9 +158,9 @@ export default function Board() {
           </div>
         </div>
       </div>
-      {(checkmate || stalemate) && (
+      {(checkmate || stalemate || draw) && (
         <div className="mt-4 text-xl font-bold text-red-600">
-          {checkmate ? "CHECKMATE" : "STALEMATE"}
+          {checkmate ? "CHECKMATE" : stalemate ? "STALEMATE" : "DRAW"}
         </div>
       )}
       <button
