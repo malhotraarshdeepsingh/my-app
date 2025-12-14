@@ -5,6 +5,7 @@ import Pieces from "./Pieces";
 import { useBoard } from "@/contexts/BoardContext";
 import { logicalFromDisplay } from "./Pieces";
 import { isKingInCheck } from "@/arbiter/attacks";
+import { isCheckmate, isStalemate } from "@/arbiter/checkmate";
 
 const baseRanks = [1, 2, 3, 4, 5, 6, 7, 8];
 const baseFiles = ["h", "g", "f", "e", "d", "c", "b", "a"];
@@ -36,6 +37,26 @@ export default function Board() {
   };
 
   const kingSquare = inCheck ? findKing(state.turn) : null;
+
+  const checkmate = isCheckmate({
+    position,
+    prevPosition:
+      state.position.length > 1
+        ? state.position[state.position.length - 2]
+        : null,
+    castling: state.castling,
+    colour: state.turn,
+  });
+
+  const stalemate = isStalemate({
+    position,
+    prevPosition:
+      state.position.length > 1
+        ? state.position[state.position.length - 2]
+        : null,
+    castling: state.castling,
+    colour: state.turn,
+  });
 
   const getClassName = (i, j) => {
     let c = "tile";
@@ -129,6 +150,11 @@ export default function Board() {
           </div>
         </div>
       </div>
+      {(checkmate || stalemate) && (
+        <div className="mt-4 text-xl font-bold text-red-600">
+          {checkmate ? "CHECKMATE" : "STALEMATE"}
+        </div>
+      )}
       <button
         onClick={() => setIsFlipped((s) => !s)}
         className="px-3 py-1 bg-gray-700 text-white rounded"
