@@ -1,3 +1,5 @@
+import { isSquareAttacked } from "./attacks";
+
 export const getRookMoves = ({ position, rank, file, piece }) => {
   const moves: number[][] = [];
   const colour = piece[0];
@@ -188,7 +190,11 @@ export const getKingMoves = ({
       position[rank][4] === "" &&
       position[rank][5] === "" &&
       position[rank][6] === "" &&
-      position[rank][7] === colour + "r"
+      position[rank][7] === colour + "r" &&
+      !isSquareAttacked({ position, rank, file: 3, byColour: enemy }) &&
+      !isSquareAttacked({ position, rank, file: 4, byColour: enemy }) &&
+      !isSquareAttacked({ position, rank, file: 5, byColour: enemy }) &&
+      !isSquareAttacked({ position, rank, file: 6, byColour: enemy })
     ) {
       moves.push([rank, 5]);
     }
@@ -196,9 +202,50 @@ export const getKingMoves = ({
       castling[colour].queenSide === true &&
       position[rank][1] === "" &&
       position[rank][2] === "" &&
-      position[rank][0] === colour + "r"
+      position[rank][0] === colour + "r" &&
+      !isSquareAttacked({ position, rank, file: 3, byColour: enemy }) &&
+      !isSquareAttacked({ position, rank, file: 2, byColour: enemy }) &&
+      !isSquareAttacked({ position, rank, file: 1, byColour: enemy })
     ) {
       moves.push([rank, 1]);
+    }
+  }
+
+  return moves;
+};
+
+export const getKingMovesNoCastle = ({
+  position,
+  rank,
+  file,
+  piece,
+  castling,
+}: any) => {
+  const moves: number[][] = [];
+  const colour = piece[0];
+  const enemy = colour === "w" ? "b" : "w";
+
+  const offsets = [
+    [1, 0],
+    [-1, 0],
+    [0, 1],
+    [0, -1],
+    [1, 1],
+    [1, -1],
+    [-1, 1],
+    [-1, -1],
+  ];
+
+  for (const [dr, df] of offsets) {
+    const r = rank + dr;
+    const f = file + df;
+
+    if (r < 0 || r > 7 || f < 0 || f > 7) continue;
+
+    const target = position[r][f];
+
+    if (target === "" || target.startsWith(enemy)) {
+      moves.push([r, f]);
     }
   }
 

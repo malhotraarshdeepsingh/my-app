@@ -4,6 +4,7 @@ import { useState } from "react";
 import Pieces from "./Pieces";
 import { useBoard } from "@/contexts/BoardContext";
 import { logicalFromDisplay } from "./Pieces";
+import { isKingInCheck } from "@/arbiter/attacks";
 
 const baseRanks = [1, 2, 3, 4, 5, 6, 7, 8];
 const baseFiles = ["h", "g", "f", "e", "d", "c", "b", "a"];
@@ -17,6 +18,24 @@ export default function Board() {
 
   const { state, dispatch } = useBoard();
   const position = state.position[state.position.length - 1];
+
+  const inCheck = isKingInCheck({
+    position,
+    colour: state.turn,
+  });
+
+  const findKing = (colour: "w" | "b") => {
+    for (let r = 0; r < 8; r++) {
+      for (let f = 0; f < 8; f++) {
+        if (position[r][f] === colour + "k") {
+          return { rank: r, file: f };
+        }
+      }
+    }
+    return null;
+  };
+
+  const kingSquare = inCheck ? findKing(state.turn) : null;
 
   const getClassName = (i, j) => {
     let c = "tile";
@@ -47,6 +66,15 @@ export default function Board() {
     if (isCandidate) {
       if (position[rank][file]) c += " attacking";
       else c += " highlight";
+    }
+
+    if (
+      inCheck &&
+      kingSquare &&
+      kingSquare.rank === rank &&
+      kingSquare.file === file
+    ) {
+      c += " check";
     }
 
     return c;

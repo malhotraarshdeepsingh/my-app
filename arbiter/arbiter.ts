@@ -6,6 +6,7 @@ import {
   getKingMoves,
   getPawnMoves,
 } from "@/arbiter/getMove";
+import filterLegalMoves from "./legality";
 
 const arbiter = {
   getRegularMoves({
@@ -18,20 +19,28 @@ const arbiter = {
   }: any) {
     if (!piece) return [];
 
-    if (piece.endsWith("r"))
-      return getRookMoves({ piece, position, rank, file });
-    if (piece.endsWith("n"))
-      return getKnightMoves({ piece, position, rank, file });
-    if (piece.endsWith("b"))
-      return getBishopMoves({ piece, position, rank, file });
-    if (piece.endsWith("q"))
-      return getQueenMoves({ piece, position, rank, file });
-    if (piece.endsWith("k"))
-      return getKingMoves({ piece, position, rank, file, castling });
-    if (piece.endsWith("p"))
-      return getPawnMoves({ piece, position, prevPosition, rank, file });
+    let pseudo = [];
 
-    return [];
+    if (piece.endsWith("r"))
+      pseudo = getRookMoves({ piece, position, rank, file });
+    if (piece.endsWith("n"))
+      pseudo = getKnightMoves({ piece, position, rank, file });
+    if (piece.endsWith("b"))
+      pseudo = getBishopMoves({ piece, position, rank, file });
+    if (piece.endsWith("q"))
+      pseudo = getQueenMoves({ piece, position, rank, file });
+    if (piece.endsWith("k"))
+      pseudo = getKingMoves({ piece, position, rank, file, castling });
+    if (piece.endsWith("p"))
+      pseudo = getPawnMoves({ piece, position, prevPosition, rank, file });
+
+    return filterLegalMoves({
+      position,
+      piece,
+      rank,
+      file,
+      moves: pseudo,
+    });
   },
 };
 
