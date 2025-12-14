@@ -65,7 +65,7 @@ export default function Board() {
     turn: state.turn,
     castling: state.castling,
     halfMoveClock: state.halfMoveClock,
-  })
+  });
 
   const getClassName = (i, j) => {
     let c = "tile";

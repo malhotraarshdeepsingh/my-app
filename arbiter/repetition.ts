@@ -1,8 +1,4 @@
-export const positionKey = ({
-  position,
-  turn,
-  castling,
-}) => {
+export const positionKey = ({ position, turn, castling }) => {
   return JSON.stringify({
     board: position,
     turn,
@@ -10,11 +6,7 @@ export const positionKey = ({
   });
 };
 
-export const isThreefoldRepetition = ({
-  history,
-  turn,
-  castling,
-}) => {
+export const isThreefoldRepetition = ({ history, turn, castling }) => {
   const counts = {};
 
   for (const pos of history) {

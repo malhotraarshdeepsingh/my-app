@@ -30,12 +30,7 @@ export const hasAnyLegalMove = ({
   return false;
 };
 
-export const isCheckmate = ({
-  position,
-  prevPosition,
-  castling,
-  colour,
-}) => {
+export const isCheckmate = ({ position, prevPosition, castling, colour }) => {
   if (!isKingInCheck({ position, colour })) return false;
 
   return !hasAnyLegalMove({
@@ -46,12 +41,7 @@ export const isCheckmate = ({
   });
 };
 
-export const isStalemate = ({
-  position,
-  prevPosition,
-  castling,
-  colour,
-}) => {
+export const isStalemate = ({ position, prevPosition, castling, colour }) => {
   // king must NOT be in check
   if (isKingInCheck({ position, colour })) return false;
 

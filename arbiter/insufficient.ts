@@ -14,22 +14,22 @@ export const isInsufficientMaterial = (position) => {
   // K + minor vs K
   if (
     pieces.length === 3 &&
-    pieces.some(p => p.endsWith("b") || p.endsWith("n"))
+    pieces.some((p) => p.endsWith("b") || p.endsWith("n"))
   ) {
     return true;
   }
 
   // K+B vs K+B same color bishops
   if (pieces.length === 4) {
-    const bishops = pieces.filter(p => p.endsWith("b"));
+    const bishops = pieces.filter((p) => p.endsWith("b"));
     if (bishops.length === 2) return true;
   }
 
   // K + 2N vs K
   if (
     pieces.length === 4 &&
-    pieces.filter(p => p.endsWith("n")).length === 2
-    ) {
+    pieces.filter((p) => p.endsWith("n")).length === 2
+  ) {
     return true;
   }
 

@@ -3,7 +3,7 @@ import { isInsufficientMaterial } from "./insufficient";
 
 const isFiftyMoveRule = (halfMoveClock) => {
   return halfMoveClock >= 100;
-}
+};
 
 export const isDraw = ({
   position,
@@ -18,4 +18,3 @@ export const isDraw = ({
     isInsufficientMaterial(position)
   );
 };
-
