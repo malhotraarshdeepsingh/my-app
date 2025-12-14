@@ -35,11 +35,46 @@ export const BoardReducer = (state, action) => {
       if (prev[0][0] === "br" && curr[0][0] !== "br")
         nextCastling.b.queenSide = false;
 
+      let reset = false;
+
+      for (let r = 0; r < 8; r++) {
+        for (let f = 0; f < 8; f++) {
+          if (prev[r][f] !== curr[r][f]) {
+            if (prev[r][f]?.endsWith("p")) {
+              reset = true;
+            }
+
+            // check pieceCounter for captures
+            const prevpieces = [];
+            const pieces = [];
+
+            for (let r = 0; r < 8; r++) {
+              for (let f = 0; f < 8; f++) {
+                const p = prev[r][f];
+                if (p) prevpieces.push(p);
+              }
+            }
+
+            for (let r = 0; r < 8; r++) {
+              for (let f = 0; f < 8; f++) {
+                const p = curr[r][f];
+                if (p) pieces.push(p);
+              }
+            }
+
+            if (pieces.length < prevpieces.length) {
+              reset = true;
+            }
+          }
+        }
+      }
+
       return {
         ...state,
         position: [...state.position, action.payload],
         castling: nextCastling,
         turn: state.turn === "w" ? "b" : "w",
+        halfMoveClock: reset ? 0 : state.halfMoveClock + 1,
       };
     }
 

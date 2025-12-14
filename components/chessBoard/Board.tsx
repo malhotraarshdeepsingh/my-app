@@ -64,6 +64,7 @@ export default function Board() {
     history: state.position,
     turn: state.turn,
     castling: state.castling,
+    halfMoveClock: state.halfMoveClock,
   })
 
   const getClassName = (i, j) => {

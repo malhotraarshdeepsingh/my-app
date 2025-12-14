@@ -8,4 +8,5 @@ export const initGame = {
     w: { kingSide: true, queenSide: true },
     b: { kingSide: true, queenSide: true },
   },
+  halfMoveClock: 0,
 };
