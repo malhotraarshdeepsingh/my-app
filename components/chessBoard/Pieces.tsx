@@ -2,7 +2,7 @@
 
 import { useRef, useState } from "react";
 import { useBoard } from "@/contexts/BoardContext";
-import { copyPosition } from "@/helper";
+import { copyPosition } from "@/helper/BoardHelper";
 import {
   generateCanditateMoves,
   makeNextPosition,

@@ -1,4 +1,4 @@
-import { createPosition, copyPosition } from "@/helper";
+import { createPosition, copyPosition } from "@/helper/BoardHelper";
 
 export const initGame = {
   position: [createPosition()],

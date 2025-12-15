@@ -1,5 +1,5 @@
 import { isKingInCheck } from "@/arbiter/attacks";
-import { copyPosition } from "@/helper";
+import { copyPosition } from "@/helper/BoardHelper";
 
 const filterLegalMoves = ({ position, piece, rank, file, moves }) => {
   const colour = piece[0];
