@@ -4,7 +4,9 @@ export const BoardReducer = (state, action) => {
   switch (action.type) {
     case actionTypes.NEW_MOVE: {
       const prev = state.position[state.position.length - 1];
-      const curr = action.payload;
+      const { next: curr } = action.payload;
+
+      const { moveList } = state;
 
       const nextCastling = {
         w: { ...state.castling.w },
@@ -71,7 +73,8 @@ export const BoardReducer = (state, action) => {
 
       return {
         ...state,
-        position: [...state.position, action.payload],
+        position: [...state.position, action.payload.next],
+        movesList: [...state.movesList, action.payload.newMove],
         castling: nextCastling,
         turn: state.turn === "w" ? "b" : "w",
         halfMoveClock: reset ? 0 : state.halfMoveClock + 1,
@@ -82,6 +85,18 @@ export const BoardReducer = (state, action) => {
       return {
         ...state,
         canditateMoves: action.payload,
+      };
+    }
+
+    case actionTypes.TAKE_BACK: {
+      if (state.position.length === 1) return state;
+      const newPosition = state.position.slice(0, -1);
+      const newMovesList = state.movesList.slice(0, -1);
+      return {
+        ...state,
+        position: newPosition,
+        movesList: newMovesList,
+        turn: state.turn === "w" ? "b" : "w",
       };
     }
 

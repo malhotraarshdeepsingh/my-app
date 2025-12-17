@@ -2,7 +2,7 @@
 
 import { useRef, useState } from "react";
 import { useBoard } from "@/contexts/BoardContext";
-import { copyPosition } from "@/helper/BoardHelper";
+import { copyPosition, getNewMoveNotation } from "@/helper/BoardHelper";
 import {
   generateCanditateMoves,
   makeNextPosition,
@@ -99,7 +99,7 @@ const Pieces = ({ isFlipped }: { isFlipped: boolean }) => {
     color: "w" | "b";
   }>(null);
 
-  const [pendingPosition, setPendingPosition] = useState<any>(null);
+  const [next, setnext] = useState<any>(null);
 
   const getCoords = (e: any) => {
     const rect = boardRef.current!.getBoundingClientRect();
@@ -118,16 +118,24 @@ const Pieces = ({ isFlipped }: { isFlipped: boolean }) => {
   };
 
   const promotePawn = (type: "q" | "r" | "b" | "n") => {
-    if (!promotion || !pendingPosition) return;
+    if (!promotion || !next) return;
 
     const { rank, file, color } = promotion;
-    pendingPosition[rank][file] = color + type;
+    next[rank][file] = color + type;
 
-    dispatch(makeNextPosition(pendingPosition));
+    const newMove = getNewMoveNotation({
+      ...state.selectedPiece,
+      x: promotion.rank,
+      y: promotion.file,
+      position: state.position[state.position.length - 1],
+      promotesTo: type,
+    });
+
+    dispatch(makeNextPosition({ next, newMove }));
     dispatch(generateCanditateMoves({ canditateMoves: [] }));
 
     setPromotion(null);
-    setPendingPosition(null);
+    setnext(null);
     setLegalMoves([]);
   };
 
@@ -164,7 +172,7 @@ const Pieces = ({ isFlipped }: { isFlipped: boolean }) => {
       const promotionRank = piece[0] === "w" ? 0 : 7;
 
       if (rank === promotionRank) {
-        setPendingPosition(next);
+        setnext(next);
         setPromotion({
           rank,
           file,
@@ -191,7 +199,19 @@ const Pieces = ({ isFlipped }: { isFlipped: boolean }) => {
       }
     }
 
-    dispatch(makeNextPosition(next));
+    dispatch(
+      makeNextPosition({
+        next,
+        newMove: getNewMoveNotation({
+          piece,
+          rank,
+          file,
+          x: getCoords(e).rank,
+          y: getCoords(e).file,
+          position: state.position[state.position.length - 1],
+        }),
+      })
+    );
     dispatch(generateCanditateMoves({ canditateMoves: [] }));
     setLegalMoves([]);
   };
