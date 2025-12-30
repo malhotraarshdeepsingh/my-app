@@ -2,7 +2,12 @@
 
 import { useRef, useState } from "react";
 import { useBoard } from "@/contexts/BoardContext";
-import { copyPosition, getNewMoveNotation } from "@/helper/BoardHelper";
+import {
+  copyPosition,
+  getCheckSuffix,
+  getGameResult,
+  getNewMoveNotation,
+} from "@/helper/BoardHelper";
 import {
   generateCanditateMoves,
   makeNextPosition,
@@ -134,6 +139,19 @@ const Pieces = ({ isFlipped }: { isFlipped: boolean }) => {
     dispatch(makeNextPosition({ next, newMove }));
     dispatch(generateCanditateMoves({ canditateMoves: [] }));
 
+    const result = getGameResult({
+      position: next,
+      prevPosition: state.position[state.position.length - 1],
+      castling: state.castling,
+      turn: state.turn === "w" ? "b" : "w",
+      history: [...state.position, next],
+      halfMoveClock: state.halfMoveClock,
+    });
+
+    if (result) {
+      console.log("GAME OVER:", result);
+    }
+
     setPromotion(null);
     setnext(null);
     setLegalMoves([]);
@@ -178,6 +196,12 @@ const Pieces = ({ isFlipped }: { isFlipped: boolean }) => {
           file,
           color: piece[0],
         });
+
+        state.selectedPiece = {
+          piece,
+          rank: oldRank,
+          file: oldFile,
+        };
         return;
       }
     }
@@ -199,19 +223,43 @@ const Pieces = ({ isFlipped }: { isFlipped: boolean }) => {
       }
     }
 
+    const suffix = getCheckSuffix({
+      position: next,
+      prevPosition: position,
+      castling: state.castling,
+      turn: state.turn,
+    });
+
     dispatch(
       makeNextPosition({
         next,
-        newMove: getNewMoveNotation({
-          piece,
-          rank,
-          file,
-          x: getCoords(e).rank,
-          y: getCoords(e).file,
-          position: state.position[state.position.length - 1],
-        }),
+        newMove:
+          getNewMoveNotation({
+            piece,
+            rank: oldRank,
+            file: oldFile,
+            x: rank,
+            y: file,
+            position: state.position[state.position.length - 1],
+          }) + suffix,
       })
     );
+
+    const result = getGameResult({
+      position: next,
+      prevPosition: position,
+      castling: state.castling,
+      turn: state.turn === "w" ? "b" : "w", // IMPORTANT
+      history: [...state.position, next],
+      halfMoveClock: state.halfMoveClock,
+    });
+
+    if (result) {
+      console.log("GAME OVER:", result);
+      // later:
+      // dispatch(setGameResult(result))
+    }
+
     dispatch(generateCanditateMoves({ canditateMoves: [] }));
     setLegalMoves([]);
   };

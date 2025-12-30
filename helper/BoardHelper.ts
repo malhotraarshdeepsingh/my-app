@@ -1,3 +1,88 @@
+import { isKingInCheck } from "@/arbiter/attacks";
+import { isCheckmate, isStalemate } from "@/arbiter/checkmate";
+import { isDraw } from "@/arbiter/draw";
+
+export const getGameResult = ({
+  position,
+  prevPosition,
+  castling,
+  turn,
+  history,
+  halfMoveClock,
+}: any) => {
+  if (
+    isCheckmate({
+      position,
+      prevPosition,
+      castling,
+      colour: turn,
+    })
+  ) {
+    return turn === "w" ? "0-1" : "1-0";
+  }
+
+  if (
+    isStalemate({
+      position,
+      prevPosition,
+      castling,
+      colour: turn,
+    })
+  ) {
+    return "1/2-1/2";
+  }
+
+  if (
+    isDraw({
+      position,
+      history,
+      turn,
+      castling,
+      halfMoveClock,
+    })
+  ) {
+    return "1/2-1/2";
+  }
+
+  return null;
+};
+
+export const getCheckSuffix = ({
+  position,
+  prevPosition,
+  castling,
+  turn,
+}: {
+  position: string[][];
+  prevPosition: string[][] | null;
+  castling: any;
+  turn: "w" | "b";
+}) => {
+  const enemy = turn === "w" ? "b" : "w";
+
+  if (
+    isCheckmate({
+      position,
+      prevPosition,
+      castling,
+      colour: enemy,
+    })
+  ) {
+    return "#";
+  }
+
+  if (
+    isKingInCheck({
+      position,
+      colour: enemy,
+    })
+  ) {
+    return "+";
+  }
+
+  return "";
+};
+
 export const getCharacter = (file) => String.fromCharCode(file + 96);
 
 export const createPosition = () => {
@@ -76,6 +161,13 @@ export const getNewMoveNotation = ({
   const pieceType = piece[1];
   const isCapture = Boolean(position[x][y]);
 
+  console.log({
+    pieceType,
+    from: { rank, file },
+    to: { x, y },
+    castle: isCastle(pieceType, file, y),
+  });
+
   // 1️⃣ Castling
   if (isCastle(pieceType, file, y)) {
     return getCastleNotation(file, y);
@@ -147,24 +239,25 @@ const getPieceNotation = ({
 };
 
 const toChessSquare = (x: number, y: number) => {
-    const rank = 8 - x; // flip vertically
-    if (y === 0) return `h${rank}`;
-    else if (y === 1) return `g${rank}`;
-    else if (y === 2) return `f${rank}`;
-    else if (y === 3) return `e${rank}`;
-    else if (y === 4) return `d${rank}`;
-    else if (y === 5) return `c${rank}`;
-    else if (y === 6) return `b${rank}`;
-    else if (y === 7) return `a${rank}`;
+  const rank = 8 - x; // flip vertically
+  if (y === 0) return `h${rank}`;
+  else if (y === 1) return `g${rank}`;
+  else if (y === 2) return `f${rank}`;
+  else if (y === 3) return `e${rank}`;
+  else if (y === 4) return `d${rank}`;
+  else if (y === 5) return `c${rank}`;
+  else if (y === 6) return `b${rank}`;
+  else if (y === 7) return `a${rank}`;
 };
 
 const square = (x: number, y: number) => toChessSquare(x, y);
 
 const getCastleNotation = (fromFile: number, toFile: number) =>
-  fromFile < toFile ? "O-O" : "O-O-O";
+  fromFile > toFile ? "O-O" : "O-O-O";
 
-const isCastle = (pieceType: string, fromFile: number, toFile: number) =>
-  pieceType === "k" && Math.abs(fromFile - toFile) === 2;
+const isCastle = (pieceType: string, fromFile: number, toFile: number) => {
+  return pieceType === "k" && Math.abs(fromFile - toFile) === 2;
+};
 
 const isPromotion = (pieceType: string, toRank: number) =>
   pieceType === "p" && (toRank === 0 || toRank === 7);
